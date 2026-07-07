@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html lang="ur">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NOVAROLL — Avatar + AI B-Roll Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-0:#080b12;
+    --bg-1:#0d1220;
+    --bg-2:#121a2b;
+    --bg-3:#182338;
+    --line:#22304a;
+    --line-soft:#1a2438;
+    --cyan:#37e6d4;
+    --cyan-dim:#1c8f83;
+    --violet:#8a7dff;
+    --amber:#ffb454;
+    --pink:#ff5fa8;
+    --text-0:#eaf1f7;
+    --text-1:#9fb0c5;
+    --text-2:#5e7089;
+    --danger:#ff5c5c;
+    --radius:14px;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    background:
+      radial-gradient(1200px 600px at 15% -10%, rgba(55,230,212,0.06), transparent 60%),
+      radial-gradient(900px 500px at 100% 0%, rgba(138,125,255,0.07), transparent 55%),
+      var(--bg-0);
+    color:var(--text-0);
+    font-family:'Space Grotesk', 'Segoe UI', sans-serif;
+    -webkit-font-smoothing:antialiased;
+    overflow:hidden;
+  }
+  .mono{ font-family:'IBM Plex Mono', monospace; letter-spacing:0.02em; }
+
+  .app{ display:flex; flex-direction:column; height:100vh; }
+
+  .topbar{
+    height:58px; flex:0 0 auto;
+    display:flex; align-items:center; gap:18px;
+    padding:0 20px;
+    background:linear-gradient(180deg, var(--bg-2), var(--bg-1));
+    border-bottom:1px solid var(--line);
+  }
+  .brand{ display:flex; align-items:center; gap:10px; margin-inline-end:6px; }
+  .brand-mark{
+    width:30px; height:30px; border-radius:9px;
+    background:conic-gradient(from 210deg, var(--cyan), var(--violet), var(--pink), var(--cyan));
+    box-shadow:0 0 18px rgba(55,230,212,0.35);
+    position:relative;
+  }
+  .brand-mark::after{ content:""; position:absolute; inset:5px; border-radius:6px; background:var(--bg-1); }
+  .brand-name{ font-weight:700; font-size:17px; letter-spacing:0.03em; }
+  .brand-name b{ color:var(--cyan); font-weight:700; }
+  .brand-tags{ display:flex; gap:10px; }
+  .tag{ font-size:10.5px; padding:4px 9px; border-radius:100px; background:var(--bg-3); color:var(--text-1); border:1px solid var(--line); display:flex; align-items:center; gap:5px; }
+  .tag .dot{ width:5px; height:5px; border-radius:50%; background:var(--cyan); box-shadow:0 0 6px var(--cyan); }
+  .topbar-right{ margin-inline-start:auto; display:flex; align-items:center; gap:10px; }
+  .field-chip{ display:flex; align-items:center; background:var(--bg-3); border:1px solid var(--line); border-radius:9px; padding:0 4px 0 10px; }
+  .field-chip span{ color:var(--text-2); font-size:10.5px; }
+  .field-chip select{ background:transparent; border:none; color:var(--text-0); font-size:12px; padding:7px 6px; font-family:inherit; }
+  .status-good{ background:rgba(55,230,212,0.12); border:1px solid rgba(55,230,212,0.4); color:var(--cyan); font-size:11px; font-weight:600; padding:7px 12px; border-radius:9px; display:flex; align-items:center; gap:6px; }
+
+  .body-grid{ flex:1 1 auto; display:flex; min-height:0; }
+  .panel{ display:flex; flex-direction:column; min-height:0; }
+  .panel-head{ display:flex; align-items:center; justify-content:space-between; padding:14px 16px 10px; font-size:11px; letter-spacing:0.12em; text-transform:uppercase; color:var(--text-2); font-weight:600; }
+  .panel-head .count{ color:var(--cyan); }
+
+  .left{ width:290px; flex:0 0 auto; border-right:1px solid var(--line); background:var(--bg-1); }
+  .left-scroll{ flex:1 1 auto; overflow-y:auto; padding:0 14px 14px; display:flex; flex-direction:column; gap:10px; }
+
+  .btn{ border:none; cursor:pointer; font-family:inherit; border-radius:10px; display:flex; align-items:center; justify-content:center; gap:8px; font-size:13px; font-weight:600; padding:11px 14px; transition:transform .12s ease, filter .12s ease, box-shadow .12s ease; }
+  .btn:active{ transform:scale(0.98); }
+  .btn:disabled{ opacity:.45; cursor:not-allowed; }
+  .btn-primary{ background:linear-gradient(135deg, var(--pink), #ff8bc4); color:#2a0416; box-shadow:0 8px 18px -8px rgba(255,95,168,0.6); }
+  .btn-primary:hover{ filter:brightness(1.07); }
+  .btn-outline{ background:var(--bg-3); color:var(--text-0); border:1px solid var(--line); }
+  .btn-outline:hover{ border-color:var(--cyan-dim); color:var(--cyan); }
+  .btn-cyan{ background:linear-gradient(135deg, var(--cyan), #5ff0e0); color:#02201c; box-shadow:0 8px 18px -8px rgba(55,230,212,0.55); }
+  .btn-cyan:hover{ filter:brightness(1.06); }
+  .btn-block{ width:100%; }
+  .btn-sm{ padding:8px 10px; font-size:12px; border-radius:8px; }
+
+  .queue-box{ background:var(--bg-2); border:1px solid var(--line); border-radius:12px; padding:12px; }
+  .queue-box .row{ display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+  .queue-box .row .idx{ font-weight:700; font-size:13px; }
+  .queue-box .row .label{ font-size:10.5px; color:var(--text-2); letter-spacing:0.08em; }
+  .progress-track{ height:6px; border-radius:6px; background:var(--bg-3); overflow:hidden; }
+  .progress-fill{ height:100%; background:linear-gradient(90deg, var(--cyan), var(--violet)); width:0%; transition:width .3s ease; }
+
+  .project-card{ background:var(--bg-2); border:1px solid var(--line); border-radius:12px; padding:10px 12px; display:flex; flex-direction:column; gap:4px; }
+  .project-card .name{ font-size:12.5px; font-weight:600; }
+  .project-card .meta{ font-size:11px; color:var(--text-2); }
+
+  .divider-label{ font-size:10px; color:var(--text-2); letter-spacing:0.14em; text-transform:uppercase; margin:6px 0 2px; }
+
+  .footer-actions{ padding:12px 14px; border-top:1px solid var(--line); display:flex; flex-direction:column; gap:9px; background:var(--bg-1); }
+  .export-note{ font-size:10.5px; color:var(--text-2); text-align:center; }
+
+  .center{ flex:1 1 auto; background:var(--bg-0); border-right:1px solid var(--line); display:flex; flex-direction:column; min-width:0; }
+  .tabs{ display:flex; gap:4px; padding:12px 16px 0; border-bottom:1px solid var(--line); }
+  .tab-btn{ background:transparent; border:none; color:var(--text-2); font-family:inherit; cursor:pointer; font-size:12.5px; font-weight:600; letter-spacing:0.04em; padding:10px 16px; border-radius:9px 9px 0 0; position:relative; }
+  .tab-btn.active{ color:var(--cyan); background:var(--bg-1); }
+  .tab-btn.active::after{ content:""; position:absolute; left:14px; right:14px; bottom:-1px; height:2px; background:var(--cyan); box-shadow:0 0 8px var(--cyan); }
+  .tab-panels{ flex:1; min-height:0; overflow-y:auto; padding:20px; }
+  .tab-panel{ display:none; }
+  .tab-panel.active{ display:block; }
+
+  .section-title{ font-size:11px; text-transform:uppercase; letter-spacing:0.12em; color:var(--text-2); font-weight:700; margin:0 0 10px; }
+  .hint{ font-size:12px; color:var(--text-2); line-height:1.6; margin:6px 0 14px; }
+
+  textarea.script-input{ width:100%; min-height:280px; resize:vertical; background:var(--bg-1); border:1px solid var(--line); border-radius:12px; color:var(--text-0); font-family:'IBM Plex Mono', monospace; font-size:13px; line-height:1.9; padding:16px; outline:none; }
+  textarea.script-input:focus{ border-color:var(--cyan-dim); box-shadow:0 0 0 3px rgba(55,230,212,0.08); }
+
+  .row-flex{ display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap; margin-top:14px; }
+  .field{ display:flex; flex-direction:column; gap:6px; }
+  .field label{ font-size:11px; color:var(--text-2); letter-spacing:0.04em; }
+  .field input[type=text], .field input[type=password]{ background:var(--bg-1); border:1px solid var(--line); border-radius:9px; color:var(--text-0); padding:10px 12px; font-family:'IBM Plex Mono',monospace; font-size:12.5px; min-width:260px; outline:none; }
+  .field input:focus{ border-color:var(--cyan-dim); }
+  .checkbox-row{ display:flex; align-items:center; gap:8px; }
+  .checkbox-row input{ width:16px; height:16px; accent-color:var(--cyan); }
+  .checkbox-row label{ font-size:12px; color:var(--text-1); }
+
+  .upload-drop{ border:1.5px dashed var(--line); border-radius:12px; padding:22px; text-align:center; cursor:pointer; color:var(--text-2); font-size:12.5px; transition:border-color .15s ease, background .15s ease; display:flex; flex-direction:column; align-items:center; gap:6px; }
+  .upload-drop:hover{ border-color:var(--cyan-dim); background:rgba(55,230,212,0.03); }
+  .upload-drop.has-file{ border-style:solid; border-color:var(--cyan-dim); color:var(--text-0); }
+
+  .scene-block{ background:var(--bg-1); border:1px solid var(--line); border-radius:14px; padding:14px 16px; margin-bottom:16px; }
+  .scene-block-head{ display:flex; align-items:center; gap:10px; margin-bottom:10px; flex-wrap:wrap; }
+  .scene-num{ width:26px; height:26px; border-radius:8px; background:var(--bg-3); color:var(--cyan); display:flex; align-items:center; justify-content:center; font-size:11.5px; font-weight:700; font-family:'IBM Plex Mono',monospace; border:1px solid var(--line); flex:0 0 auto; }
+  .scene-time{ font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--text-2); flex:0 0 auto; }
+  .scene-text{ font-size:12.5px; color:var(--text-1); flex:1 1 220px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0; }
+  .scene-query{ font-size:11px; color:var(--violet); font-family:'IBM Plex Mono',monospace; flex:0 0 auto; }
+
+  .broll-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(130px,1fr)); gap:10px; }
+  .broll-card{ position:relative; border-radius:10px; overflow:hidden; background:var(--bg-2); border:1px solid var(--line); aspect-ratio:16/9; cursor:pointer; }
+  .broll-card img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .broll-card .overlay{ position:absolute; inset:0; background:linear-gradient(180deg, transparent 40%, rgba(0,0,0,0.75)); display:flex; align-items:flex-end; padding:6px; opacity:0; transition:opacity .15s ease; }
+  .broll-card:hover .overlay{ opacity:1; }
+  .broll-card .add-btn{ background:var(--cyan); color:#022; border:none; border-radius:7px; padding:5px 9px; font-size:11px; font-weight:700; cursor:pointer; width:100%; }
+  .broll-card.selected{ outline:2px solid var(--cyan); box-shadow:0 0 14px rgba(55,230,212,0.4); }
+  .broll-card.selected::before{ content:"✓ SELECTED"; position:absolute; top:6px; left:6px; font-size:9px; font-weight:700; letter-spacing:0.06em; background:var(--cyan); color:#022; padding:2px 6px; border-radius:5px; z-index:2; }
+  .broll-loading, .broll-empty{ font-size:12px; color:var(--text-2); padding:14px 4px; }
+
+  .sync-row{ display:flex; align-items:center; gap:14px; padding:12px 14px; background:var(--bg-1); border:1px solid var(--line); border-radius:12px; margin-bottom:10px; }
+  .sync-thumb{ width:64px; height:40px; border-radius:6px; overflow:hidden; background:var(--bg-3); flex:0 0 auto; }
+  .sync-thumb img{ width:100%; height:100%; object-fit:cover; }
+  .sync-info{ flex:1; min-width:0; }
+  .sync-info .t{ font-size:12.5px; color:var(--text-0); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .sync-info .m{ font-size:11px; color:var(--text-2); font-family:'IBM Plex Mono',monospace; margin-top:2px; }
+  .sync-bar-track{ width:160px; height:5px; background:var(--bg-3); border-radius:6px; overflow:hidden; flex:0 0 auto; }
+  .sync-bar-fill{ height:100%; background:linear-gradient(90deg,var(--violet),var(--cyan)); }
+
+  .log-line{ font-family:'IBM Plex Mono',monospace; font-size:12px; padding:4px 0; color:var(--text-1); border-bottom:1px solid var(--line-soft); }
+  .log-line .lt{ color:var(--text-2); margin-inline-end:8px; }
+  .log-line.ok{ color:var(--cyan); }
+  .log-line.warn{ color:var(--amber); }
+  .log-line.err{ color:var(--danger); }
+
+  .right{ width:360px; flex:0 0 auto; background:var(--bg-1); }
+  .right-scroll{ flex:1 1 auto; overflow-y:auto; padding:0 16px 16px; }
+  .live-badge{ display:flex; align-items:center; gap:6px; font-size:11px; color:var(--text-2); }
+  .live-badge .rec{ width:7px; height:7px; border-radius:50%; background:var(--danger); box-shadow:0 0 8px var(--danger); animation:pulse 1.4s infinite; }
+  @keyframes pulse{ 0%,100%{opacity:1;} 50%{opacity:.35;} }
+  .sync-pct{ font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--cyan); }
+
+  .monitor-frame{ position:relative; width:100%; margin:0 auto 12px; background:#000; border-radius:14px; overflow:hidden; border:1px solid var(--line); box-shadow:0 20px 40px -20px rgba(0,0,0,0.6); aspect-ratio:9/16; }
+  .monitor-frame video.bg-video, .monitor-frame .bg-placeholder{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+  .bg-placeholder{ display:flex; align-items:center; justify-content:center; color:var(--text-2); font-size:11.5px; background:radial-gradient(circle at 50% 30%, #17233a, #0a0f19); text-align:center; padding:20px; }
+
+  .avatar-pill{ position:absolute; right:14px; bottom:14px; width:38%; aspect-ratio:1/1; border-radius:50%; overflow:hidden; border:3px solid rgba(55,230,212,0.65); box-shadow:0 0 0 4px rgba(0,0,0,0.4), 0 8px 20px rgba(0,0,0,0.5); background:#000; transition:all .2s ease; }
+  .avatar-pill video{ width:100%; height:100%; object-fit:cover; }
+
+  /* Template variants */
+  .monitor-frame.tpl-split .bg-video{ height:50%; top:0; bottom:auto; }
+  .monitor-frame.tpl-split .avatar-pill{ position:absolute; left:0; right:0; top:50%; bottom:0; width:100%; height:50%; aspect-ratio:auto; border-radius:0; border:none; border-top:2px solid var(--cyan); box-shadow:none; }
+  .monitor-frame.tpl-full .avatar-pill{ opacity:0; width:1px; height:1px; pointer-events:none; }
+  .monitor-frame.tpl-lowerthird .avatar-pill{ position:absolute; left:0; right:0; bottom:0; top:auto; width:100%; height:28%; aspect-ratio:auto; border-radius:14px 14px 0 0; border:2px solid var(--cyan); border-bottom:none; }
+
+  .caption-strip{ position:absolute; left:10px; right:10px; bottom:10%; text-align:center; font-size:13px; font-weight:700; color:#fff; text-shadow:0 2px 6px rgba(0,0,0,0.95),0 0 2px rgba(0,0,0,0.9); padding:0 6px; z-index:3; line-height:1.4; }
+  .name-tag{ position:absolute; left:12px; bottom:14px; background:rgba(0,0,0,0.55); backdrop-filter:blur(4px); padding:4px 10px; border-radius:7px; font-size:10.5px; letter-spacing:0.05em; color:#fff; font-weight:700; z-index:3; }
+  .transport{ display:flex; align-items:center; justify-content:center; gap:16px; margin-bottom:6px; }
+  .transport button{ background:var(--bg-3); border:1px solid var(--line); color:var(--text-0); border-radius:8px; width:34px; height:30px; cursor:pointer; }
+  .transport button:hover{ border-color:var(--cyan-dim); color:var(--cyan); }
+  .timecode{ text-align:center; font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--text-2); margin-bottom:14px; }
+
+  .assignments-head{ display:flex; justify-content:space-between; align-items:center; margin:4px 0 8px; }
+  .assign-card{ display:flex; align-items:center; gap:10px; background:var(--bg-2); border:1px solid var(--line); border-radius:10px; padding:8px; margin-bottom:8px; }
+  .assign-thumb{ width:52px; height:40px; border-radius:6px; overflow:hidden; background:var(--bg-3); flex:0 0 auto; position:relative; }
+  .assign-thumb img{ width:100%; height:100%; object-fit:cover; }
+  .assign-body{ flex:1; min-width:0; }
+  .assign-top{ display:flex; align-items:center; gap:8px; font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:var(--text-2); }
+  .assign-top b{ color:var(--cyan); }
+  .assign-dur{ margin-inline-start:auto; }
+  .assign-text{ font-size:11.5px; color:var(--text-1); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-top:2px; }
+  .assign-actions{ display:flex; flex-direction:column; gap:5px; }
+  .icon-btn{ width:26px; height:26px; border-radius:7px; border:1px solid var(--line); background:var(--bg-3); color:var(--text-1); display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:13px; }
+  .icon-btn.add{ color:var(--cyan); border-color:rgba(55,230,212,0.3); }
+  .icon-btn.rm{ color:var(--danger); border-color:rgba(255,92,92,0.25); }
+
+  ::-webkit-scrollbar{ width:9px; height:9px; }
+  ::-webkit-scrollbar-thumb{ background:var(--bg-3); border-radius:8px; border:2px solid var(--bg-1); }
+  ::-webkit-scrollbar-track{ background:transparent; }
+
+  .modal-backdrop{ position:fixed; inset:0; background:rgba(4,6,10,0.72); backdrop-filter:blur(3px); display:none; align-items:center; justify-content:center; z-index:50; }
+  .modal-backdrop.show{ display:flex; }
+  .modal{ width:min(440px, 90vw); background:var(--bg-2); border:1px solid var(--line); border-radius:16px; padding:22px; box-shadow:0 30px 60px -20px rgba(0,0,0,0.7); }
+  .modal h3{ margin:0 0 6px; font-size:16px; }
+  .modal p{ margin:0 0 16px; font-size:12.5px; color:var(--text-2); line-height:1.6; }
+  .modal .actions{ display:flex; justify-content:flex-end; gap:10px; margin-top:18px; }
+  .group-choice{ display:flex; flex-direction:column; gap:8px; }
+
+  .toast-wrap{ position:fixed; bottom:20px; right:20px; display:flex; flex-direction:column; gap:8px; z-index:100; }
+  .toast{ background:var(--bg-2); border:1px solid var(--line); border-left:3px solid var(--cyan); border-radius:10px; padding:11px 15px; font-size:12.5px; color:var(--text-0); box-shadow:0 12px 30px -10px rgba(0,0,0,0.5); animation:slidein .25s ease; max-width:320px; }
+  .toast.err{ border-left-color:var(--danger); }
+  .toast.warn{ border-left-color:var(--amber); }
+  @keyframes slidein{ from{ transform:translateY(10px); opacity:0;} to{ transform:translateY(0); opacity:1;} }
+
+  select{ color-scheme:dark; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-mark"></div>
+      <div class="brand-name">NOVA<b>ROLL</b></div>
+    </div>
+    <div class="brand-tags">
+      <div class="tag"><span class="dot"></span>Auto Sync</div>
+      <div class="tag"><span class="dot" style="background:var(--violet);box-shadow:0 0 6px var(--violet)"></span>AI B‑Roll</div>
+      <div class="tag"><span class="dot" style="background:var(--pink);box-shadow:0 0 6px var(--pink)"></span>Studio Render</div>
+    </div>
+    <div class="topbar-right">
+      <div class="field-chip"><span>TEMPLATE</span>
+        <select id="templateSel"><option>Pill Overlay</option><option>Split Screen</option><option>Full B‑Roll</option><option>Lower Third</option></select>
+      </div>
+      <div class="field-chip"><span>ASPECT</span>
+        <select id="aspectSel"><option value="9/16">9:16</option><option value="16/9">16:9</option><option value="1/1">1:1</option></select>
+      </div>
+      <div class="status-good" id="engineStatus"><span class="dot" style="width:6px;height:6px;border-radius:50%;background:var(--cyan)"></span>ENGINE READY</div>
+    </div>
+  </div>
+
+  <div class="body-grid">
+
+    <div class="panel left">
+      <div class="panel-head">PROJECT <span class="count" id="projCount">0</span></div>
+      <div class="left-scroll">
+        <button class="btn btn-primary btn-block" id="btnAddProject">＋ Add Avatar Video</button>
+        <div id="projectCard"></div>
+
+        <div class="divider-label">Rendering Queue</div>
+        <div class="queue-box">
+          <div class="row"><div class="idx" id="queueIdx">0 / 0</div><div class="label">SCENES</div></div>
+          <div class="progress-track"><div class="progress-fill" id="queueProgress"></div></div>
+        </div>
+
+        <div class="divider-label">Pexels B‑Roll Key</div>
+        <div class="field">
+          <input type="password" id="pexelsKeyLeft" placeholder="paste API key…">
+        </div>
+      </div>
+      <div class="footer-actions">
+        <button class="btn btn-outline btn-block" id="btnRunQueue">▶ Run Auto‑Sync</button>
+        <button class="btn btn-cyan btn-block" id="btnExport">⬇ Export Video</button>
+        <div class="export-note">Renders locally in your browser — nothing uploaded.</div>
+      </div>
+    </div>
+
+    <div class="panel center">
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="script">Script</button>
+        <button class="tab-btn" data-tab="broll">B‑Roll</button>
+        <button class="tab-btn" data-tab="sync">Sync</button>
+        <button class="tab-btn" data-tab="log">Log</button>
+      </div>
+
+      <div class="tab-panels">
+
+        <div class="tab-panel active" id="tab-script">
+          <div class="section-title">Avatar Video</div>
+          <div class="upload-drop" id="dropAvatar">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 16l4.5-6 3 4 2.5-3L20 16"/><rect x="3" y="4" width="18" height="16" rx="2"/></svg>
+            <span id="dropAvatarLabel">Drop your talking‑head / avatar video here, or click to browse</span>
+          </div>
+          <input type="file" id="avatarFileInput" accept="video/*" style="display:none">
+
+          <div class="section-title" style="margin-top:22px;">Script <span style="color:var(--text-2);font-weight:400;text-transform:none;">— one sentence per line</span></div>
+          <textarea class="script-input" id="scriptInput" placeholder="Have you ever sat beside someone who could no longer remember your name?
+Quick note before we continue, if topics like this matter to you, subscribe.
+By the time dementia reaches its final stage, the disease has taken almost everything."></textarea>
+
+          <div class="row-flex">
+            <div class="field">
+              <label>Pexels API Key <span style="color:var(--cyan)">(free — 200/hr, 20k/mo)</span></label>
+              <input type="text" id="pexelsKeyMain" placeholder="e.g. 563492ad6f91700001000001xxxxxxxxxxxxxxxxxxxxxxxx">
+            </div>
+            <button class="btn btn-primary" id="btnNext" style="height:42px;">Next → Find B‑Roll</button>
+          </div>
+
+          <div class="checkbox-row" style="margin-top:14px;">
+            <input type="checkbox" id="captionsToggle" checked>
+            <label for="captionsToggle">Burn synced captions on export (free — generated straight from your script, no API needed)</label>
+          </div>
+
+          <div class="hint">"Next" will first ask how many sentences to group into each B‑roll scene, then split your script accordingly (weighted to your avatar's real duration), auto‑pick the best‑matching Pexels clip for every scene, and line everything up on the Sync tab. Get a free key at <span class="mono" style="color:var(--text-1)">pexels.com/api</span>.</div>
+        </div>
+
+        <div class="tab-panel" id="tab-broll">
+          <div class="section-title">B‑Roll Candidates</div>
+          <div class="hint">The best match is auto‑selected for every scene. Click any other clip's <b style="color:var(--cyan)">Add</b> button to swap it in instead — nothing needs downloading separately.</div>
+          <div id="brollScenesWrap"><div class="broll-empty">Run "Next → Find B‑Roll" from the Script tab first.</div></div>
+        </div>
+
+        <div class="tab-panel" id="tab-sync">
+          <div class="section-title">Timeline Sync</div>
+          <div class="hint">Each scene's duration is weighted by its own text length against your avatar video's real runtime — short lines get short clips, long lines get longer clips, then the next scene picks up immediately after.</div>
+          <div id="syncRows"><div class="broll-empty">Nothing to sync yet.</div></div>
+        </div>
+
+        <div class="tab-panel" id="tab-log">
+          <div class="section-title">Engine Log</div>
+          <div id="logWrap"></div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="panel right">
+      <div class="panel-head">
+        <span class="live-badge"><span class="rec"></span>LIVE MONITOR</span>
+        <span class="sync-pct" id="syncPct">SYNC: —</span>
+      </div>
+      <div class="right-scroll">
+        <div class="monitor-frame tpl-pill" id="monitorFrame">
+          <div class="bg-placeholder" id="bgPlaceholder">Upload an avatar video to begin</div>
+          <video class="bg-video" id="bgVideo" muted playsinline style="display:none;"></video>
+          <div class="avatar-pill" id="avatarPill" style="display:none;">
+            <video id="avatarVideo" playsinline></video>
+          </div>
+          <div class="caption-strip" id="captionStrip"></div>
+          <div class="name-tag" id="nameTag" style="display:none;"></div>
+        </div>
+        <div class="transport">
+          <button id="btnRW">⏮</button>
+          <button id="btnPlay">▶</button>
+          <button id="btnFF">⏭</button>
+        </div>
+        <div class="timecode" id="timecode">00:00 / 00:00</div>
+
+        <div class="assignments-head">
+          <div class="section-title" style="margin:0;">Scene Assignments</div>
+        </div>
+        <div id="assignmentsWrap"><div class="broll-empty">Scenes will appear here after processing.</div></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="modal-backdrop" id="groupModalBackdrop">
+  <div class="modal">
+    <h3>B‑Roll grouping</h3>
+    <p>Kitne sentences (lines) milaa kar ek B‑Roll scene banayein? Kam sentences = zyada tez cuts, zyada sentences = lambay clips.</p>
+    <div class="group-choice">
+      <button class="btn btn-outline btn-block" data-group="1">1 Sentence per B‑Roll</button>
+      <button class="btn btn-outline btn-block" data-group="2">2 Sentences per B‑Roll</button>
+      <button class="btn btn-outline btn-block" data-group="3">3 Sentences per B‑Roll</button>
+      <button class="btn btn-outline btn-block" data-group="4">4 Sentences per B‑Roll</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="exportModalBackdrop">
+  <div class="modal">
+    <h3 id="exportModalTitle">Rendering export…</h3>
+    <p id="exportModalBody">Loading the render engine and compositing your scenes. This runs entirely in your browser and can take a few minutes for longer videos.</p>
+    <div class="progress-track"><div class="progress-fill" id="exportProgress" style="width:0%"></div></div>
+    <div class="actions">
+      <button class="btn btn-outline btn-sm" id="exportModalClose">Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script type="module">
+/* =========================================================
+   NOVAROLL — Avatar + AI B-Roll Studio
+   Single-file client app. No backend. Uses:
+     - Pexels Videos API for B-roll search (free, authenticated REST API)
+     - HTMLVideoElement for live preview / scene sync
+     - ffmpeg.wasm for real in-browser export & compositing
+   ========================================================= */
+
+const TEMPLATE_MAP = {'Pill Overlay':'tpl-pill','Split Screen':'tpl-split','Full B‑Roll':'tpl-full','Lower Third':'tpl-lowerthird'};
+const FONT_URL = 'https://cdn.jsdelivr.net/gh/google/fonts/apache/roboto/Roboto-Bold.ttf';
+
+const state = {
+  avatarFile: null,
+  avatarURL: null,
+  avatarDuration: 0,
+  scenes: [],
+  pexelsKey: '',
+  ffmpeg: null,
+  ffmpegLoaded: false,
+  aspect: '9/16',
+  template: 'tpl-pill',
+  pendingLines: null,
+};
+
+const $ = (sel) => document.querySelector(sel);
+const $$ = (sel) => Array.from(document.querySelectorAll(sel));
+
+function toast(msg, kind='ok'){
+  const wrap = $('#toastWrap');
+  const el = document.createElement('div');
+  el.className = 'toast' + (kind==='err' ? ' err' : kind==='warn' ? ' warn' : '');
+  el.textContent = msg;
+  wrap.appendChild(el);
+  setTimeout(()=>{ el.style.opacity='0'; el.style.transition='opacity .3s'; setTimeout(()=>el.remove(),300); }, 4200);
+}
+
+function log(msg, kind='ok'){
+  const wrap = $('#logWrap');
+  const line = document.createElement('div');
+  line.className = 'log-line ' + kind;
+  const t = new Date().toLocaleTimeString();
+  line.innerHTML = `<span class="lt mono">[${t}]</span>${msg}`;
+  wrap.appendChild(line);
+  wrap.scrollTop = wrap.scrollHeight;
+}
+
+/* ---------- Tabs ---------- */
+$$('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    $$('.tab-btn').forEach(b=>b.classList.remove('active'));
+    $$('.tab-panel').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');
+    $('#tab-'+btn.dataset.tab).classList.add('active');
+  });
+});
+
+/* ---------- Aspect / Template controls (now actually wired up) ---------- */
+function applyAspect(value){
+  state.aspect = value;
+  $('#monitorFrame').style.aspectRatio = value;
+}
+function applyTemplate(name){
+  const cls = TEMPLATE_MAP[name] || 'tpl-pill';
+  state.template = cls;
+  const frame = $('#monitorFrame');
+  frame.classList.remove('tpl-pill','tpl-split','tpl-full','tpl-lowerthird');
+  frame.classList.add(cls);
+}
+$('#aspectSel').addEventListener('change', e=> applyAspect(e.target.value));
+$('#templateSel').addEventListener('change', e=> applyTemplate(e.target.value));
+applyAspect($('#aspectSel').value);
+applyTemplate($('#templateSel').value);
+
+/* ---------- Avatar upload ---------- */
+const avatarInput = $('#avatarFileInput');
+$('#btnAddProject').addEventListener('click', ()=> avatarInput.click());
+$('#dropAvatar').addEventListener('click', ()=> avatarInput.click());
+['dragover','dragleave','drop'].forEach(evt=>{
+  $('#dropAvatar').addEventListener(evt, e=>{
+    e.preventDefault();
+    if(evt==='drop' && e.dataTransfer.files[0]) handleAvatarFile(e.dataTransfer.files[0]);
+  });
+});
+avatarInput.addEventListener('change', e=>{ if(e.target.files[0]) handleAvatarFile(e.target.files[0]); });
+
+function handleAvatarFile(file){
+  if(!file.type.startsWith('video/')){ toast('Please choose a video file.', 'err'); return; }
+  state.avatarFile = file;
+  state.avatarURL = URL.createObjectURL(file);
+  $('#dropAvatar').classList.add('has-file');
+  $('#dropAvatarLabel').textContent = '✓ ' + file.name;
+
+  const probe = document.createElement('video');
+  probe.preload = 'metadata';
+  probe.src = state.avatarURL;
+  probe.onloadedmetadata = ()=>{
+    state.avatarDuration = probe.duration || 0;
+    renderProjectCard(file);
+    setupMonitor();
+    log(`Avatar video loaded — duration ${fmtTime(state.avatarDuration)}.`);
+    toast('Avatar video loaded.');
+  };
+}
+
+function renderProjectCard(file){
+  $('#projCount').textContent = '1';
+  $('#projectCard').innerHTML = `
+    <div class="project-card">
+      <div class="name">${escapeHtml(file.name)}</div>
+      <div class="meta">${(file.size/1024/1024).toFixed(1)} MB · ${fmtTime(state.avatarDuration)}</div>
+    </div>`;
+}
+
+function fmtTime(s){
+  s = Math.max(0, s||0);
+  const m = Math.floor(s/60).toString().padStart(2,'0');
+  const sec = Math.floor(s%60).toString().padStart(2,'0');
+  return `${m}:${sec}`;
+}
+function escapeHtml(str){
+  return String(str).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+/* ---------- Keyword / scene extraction ---------- */
+const STOPWORDS = new Set(['the','a','an','and','or','of','in','on','at','to','for','with','is','was','were','are','be','been','his','her','their','he','she','it','that','this','as','by','from','after','before','during','over','under','into','out','up','down','who','which','has','have','had','not','but','also','than','then','when','while','left','age','years','old','you','your','yourself']);
+
+function extractQuery(text){
+  const words = text.toLowerCase().replace(/[^a-z0-9\s]/g,' ').split(/\s+/).filter(Boolean);
+  const scored = words.filter(w=> w.length>3 && !STOPWORDS.has(w));
+  const freq = {};
+  scored.forEach(w=> freq[w]=(freq[w]||0)+1);
+  const top = Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,3).map(e=>e[0]);
+  return top.length ? top.join(' ') : (words.slice(0,3).join(' ') || 'cinematic background');
+}
+
+function splitScript(raw){
+  // split on newlines first, then also break long single lines on sentence punctuation
+  const rawLines = raw.split('\n').map(l=>l.trim()).filter(Boolean);
+  const out = [];
+  rawLines.forEach(line=>{
+    const parts = line.split(/(?<=[.?!])\s+/).map(p=>p.trim()).filter(Boolean);
+    if(parts.length>1) out.push(...parts); else out.push(line);
+  });
+  return out;
+}
+
+function groupLines(lines, groupSize){
+  const groups = [];
+  for(let i=0;i<lines.length;i+=groupSize){
+    groups.push(lines.slice(i, i+groupSize).join(' '));
+  }
+  return groups;
+}
+
+/* ---------- NEXT: ask grouping, then process script -> scenes -> pexels search ---------- */
+$('#btnNext').addEventListener('click', ()=>{
+  const raw = $('#scriptInput').value;
+  const lines = splitScript(raw);
+  const key = ($('#pexelsKeyMain').value || $('#pexelsKeyLeft').value || '').trim();
+
+  if(!state.avatarFile){ toast('Add an avatar video first.', 'err'); return; }
+  if(lines.length===0){ toast('Write a script — one sentence per line.', 'err'); return; }
+  if(!key){ toast('Enter your Pexels API key.', 'err'); return; }
+
+  state.pexelsKey = key;
+  $('#pexelsKeyLeft').value = key;
+  state.pendingLines = lines;
+  $('#groupModalBackdrop').classList.add('show');
+});
+
+$$('.group-choice [data-group]').forEach(btn=>{
+  btn.addEventListener('click', async ()=>{
+    const groupSize = Number(btn.dataset.group);
+    $('#groupModalBackdrop').classList.remove('show');
+    await processScenes(state.pendingLines, groupSize);
+  });
+});
+
+async function processScenes(lines, groupSize){
+  const groups = groupLines(lines, groupSize);
+  const weights = groups.map(l=>l.length);
+  const totalWeight = weights.reduce((a,b)=>a+b,0) || 1;
+  const totalDur = state.avatarDuration || groups.length*5;
+
+  let cursor = 0;
+  state.scenes = groups.map((text,i)=>{
+    const duration = totalWeight ? (weights[i]/totalWeight)*totalDur : totalDur/groups.length;
+    const scene = { id:i, text, query: extractQuery(text), start: cursor, duration, results: [], selected: null };
+    cursor += duration;
+    return scene;
+  });
+
+  renderSyncRows();
+  renderAssignments();
+  log(`Script parsed into ${state.scenes.length} scenes (${groupSize} sentence(s) each). Searching Pexels for B‑roll…`);
+  $('#queueIdx').textContent = `0 / ${state.scenes.length}`;
+
+  $('#brollScenesWrap').innerHTML = '';
+  for(let i=0;i<state.scenes.length;i++){
+    await searchAndRenderScene(state.scenes[i], i);
+    $('#queueProgress').style.width = `${Math.round(((i+1)/state.scenes.length)*100)}%`;
+    $('#queueIdx').textContent = `${i+1} / ${state.scenes.length}`;
+  }
+  updateSyncPct();
+  toast('B‑roll search complete — best match auto‑selected for every scene.');
+  $$('.tab-btn').forEach(b=>b.classList.remove('active'));
+  $$('.tab-panel').forEach(p=>p.classList.remove('active'));
+  $('.tab-btn[data-tab="broll"]').classList.add('active');
+  $('#tab-broll').classList.add('active');
+}
+
+async function searchAndRenderScene(scene, idx){
+  const wrap = $('#brollScenesWrap');
+  const block = document.createElement('div');
+  block.className = 'scene-block';
+  block.id = `scene-block-${scene.id}`;
+  block.innerHTML = `
+    <div class="scene-block-head">
+      <div class="scene-num">${idx+1}</div>
+      <div class="scene-time mono">${fmtTime(scene.start)}–${fmtTime(scene.start+scene.duration)}</div>
+      <div class="scene-text">${escapeHtml(scene.text)}</div>
+      <div class="scene-query">"${escapeHtml(scene.query)}"</div>
+    </div>
+    <div class="broll-grid"><div class="broll-loading">Searching Pexels…</div></div>`;
+  wrap.appendChild(block);
+
+  try{
+    const results = await pexelsSearch(scene.query, state.pexelsKey);
+    scene.results = results;
+    const grid = block.querySelector('.broll-grid');
+    if(results.length===0){
+      grid.innerHTML = '<div class="broll-empty">No matches — try adjusting the wording of this line.</div>';
+      log(`Scene ${idx+1}: no B‑roll found for "${scene.query}".`, 'warn');
+      return;
+    }
+    const best = pickBest(results, scene.duration);
+    grid.innerHTML = '';
+    results.forEach(r=>{
+      const card = document.createElement('div');
+      card.className = 'broll-card' + (r===best ? ' selected' : '');
+      card.innerHTML = `
+        <img src="${r.thumb}" loading="lazy" alt="">
+        <div class="overlay"><button class="add-btn">＋ Add</button></div>`;
+      card.querySelector('.add-btn').addEventListener('click', (e)=>{
+        e.stopPropagation();
+        assignBroll(scene, r, card, grid, false);
+      });
+      grid.appendChild(card);
+    });
+    if(best) assignBroll(scene, best, null, grid, true);
+    log(`Scene ${idx+1}: found ${results.length} candidates for "${scene.query}" — auto‑picked best match.`);
+  }catch(err){
+    const grid = block.querySelector('.broll-grid');
+    grid.innerHTML = `<div class="broll-empty" style="color:var(--danger)">Pexels error: ${escapeHtml(err.message)}</div>`;
+    log(`Scene ${idx+1} search failed: ${err.message}`, 'err');
+  }
+}
+
+async function pexelsSearch(query, key){
+  const url = `https://api.pexels.com/videos/search?query=${encodeURIComponent(query)}&per_page=8&orientation=portrait`;
+  const res = await fetch(url, { headers: { Authorization: key } });
+  if(!res.ok){
+    if(res.status===401) throw new Error('invalid API key');
+    if(res.status===429) throw new Error('rate limit reached — wait a bit and retry');
+    throw new Error(`HTTP ${res.status}`);
+  }
+  const data = await res.json();
+  return (data.videos||[]).map(v=>{
+    const files = (v.video_files||[]).filter(f=>f.file_type==='video/mp4');
+    const pick = files.find(f=>f.quality==='sd') || files.sort((a,b)=>a.width-b.width)[0];
+    return { id: v.id, thumb: v.image, videoUrl: pick ? pick.link : null, duration: v.duration || 0, tags: v.url };
+  }).filter(r=>r.videoUrl);
+}
+
+function pickBest(results, neededDuration){
+  if(results.length===0) return null;
+  const longEnough = results.filter(r=> r.duration >= neededDuration);
+  if(longEnough.length) return longEnough.sort((a,b)=>a.duration-b.duration)[0];
+  return results.slice().sort((a,b)=>(b.duration||0)-(a.duration||0))[0];
+}
+
+function assignBroll(scene, result, cardEl, gridEl, silent){
+  scene.selected = result;
+  if(gridEl) Array.from(gridEl.children).forEach(c=>c.classList.remove('selected'));
+  if(cardEl) cardEl.classList.add('selected');
+  else if(gridEl){
+    // mark the matching card as selected when called programmatically (auto-pick)
+    Array.from(gridEl.children).forEach(c=>{
+      if(c.querySelector('img')?.src === result.thumb) c.classList.add('selected');
+    });
+  }
+  renderSyncRows();
+  renderAssignments();
+  updateSyncPct();
+  if(!silent){
+    log(`Scene ${scene.id+1} assigned B‑roll clip #${result.id}.`);
+    toast(`Added B‑roll to scene ${scene.id+1}.`);
+  }
+}
+
+/* ---------- Sync tab rendering ---------- */
+function renderSyncRows(){
+  const wrap = $('#syncRows');
+  if(state.scenes.length===0){ wrap.innerHTML = '<div class="broll-empty">Nothing to sync yet.</div>'; return; }
+  const total = state.avatarDuration || 1;
+  wrap.innerHTML = state.scenes.map((s,i)=>{
+    const pct = Math.min(100, (s.duration/total)*100);
+    const thumb = s.selected ? s.selected.thumb : '';
+    return `
+    <div class="sync-row">
+      <div class="sync-thumb">${thumb ? `<img src="${thumb}">` : ''}</div>
+      <div class="sync-info">
+        <div class="t">${i+1}. ${escapeHtml(s.text)}</div>
+        <div class="m">${fmtTime(s.start)} → ${fmtTime(s.start+s.duration)} · ${s.duration.toFixed(1)}s ${s.selected? '· B‑roll linked':'· awaiting B‑roll'}</div>
+      </div>
+      <div class="sync-bar-track"><div class="sync-bar-fill" style="width:${pct}%"></div></div>
+    </div>`;
+  }).join('');
+}
+
+function updateSyncPct(){
+  if(state.scenes.length===0){ $('#syncPct').textContent = 'SYNC: —'; return; }
+  const linked = state.scenes.filter(s=>s.selected).length;
+  const pct = Math.round((linked/state.scenes.length)*100);
+  $('#syncPct').textContent = `SYNC: ${pct}%`;
+}
+
+/* ---------- Right panel: Scene Assignments ---------- */
+function renderAssignments(){
+  const wrap = $('#assignmentsWrap');
+  if(state.scenes.length===0){ wrap.innerHTML = '<div class="broll-empty">Scenes will appear here after processing.</div>'; return; }
+  wrap.innerHTML = state.scenes.map((s,i)=>{
+    const thumb = s.selected ? s.selected.thumb : '';
+    return `
+    <div class="assign-card">
+      <div class="assign-thumb">${thumb?`<img src="${thumb}">`:''}</div>
+      <div class="assign-body">
+        <div class="assign-top">#${i+1} <b>${fmtTime(s.start)}</b><span class="assign-dur">${s.duration.toFixed(1)}s</span></div>
+        <div class="assign-text">${escapeHtml(s.text)}</div>
+      </div>
+      <div class="assign-actions">
+        <button class="icon-btn add" title="Add / change B-roll" data-scene="${s.id}">＋</button>
+        <button class="icon-btn rm" title="Remove B-roll" data-scene="${s.id}">✕</button>
+      </div>
+    </div>`;
+  }).join('');
+
+  wrap.querySelectorAll('.icon-btn.add').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      $$('.tab-btn').forEach(b=>b.classList.remove('active'));
+      $$('.tab-panel').forEach(p=>p.classList.remove('active'));
+      $('.tab-btn[data-tab="broll"]').classList.add('active');
+      $('#tab-broll').classList.add('active');
+      const target = $(`#scene-block-${btn.dataset.scene}`);
+      if(target) target.scrollIntoView({behavior:'smooth', block:'center'});
+    });
+  });
+  wrap.querySelectorAll('.icon-btn.rm').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const scene = state.scenes[Number(btn.dataset.scene)];
+      scene.selected = null;
+      const block = $(`#scene-block-${scene.id}`);
+      if(block) block.querySelectorAll('.broll-card').forEach(c=>c.classList.remove('selected'));
+      renderSyncRows(); renderAssignments(); updateSyncPct();
+      log(`Scene ${scene.id+1} B‑roll removed.`, 'warn');
+    });
+  });
+}
+
+/* ---------- Live Monitor ---------- */
+function setupMonitor(){
+  $('#bgPlaceholder').style.display = 'none';
+  const bg = $('#bgVideo');
+  const av = $('#avatarVideo');
+  av.src = state.avatarURL;
+  av.style.display = 'block';
+  bg.style.display = 'block';
+  $('#avatarPill').style.display = 'block';
+  $('#nameTag').style.display = 'block';
+  $('#nameTag').textContent = 'AVATAR';
+
+  av.addEventListener('timeupdate', ()=>{
+    $('#timecode').textContent = `${fmtTime(av.currentTime)} / ${fmtTime(state.avatarDuration)}`;
+    const scene = state.scenes.find(s=> av.currentTime >= s.start && av.currentTime < s.start+s.duration);
+    if(scene){
+      if($('#captionsToggle').checked){ $('#captionStrip').textContent = scene.text; }
+      else { $('#captionStrip').textContent = ''; }
+      if(scene.selected){
+        const wantSrc = scene.selected.videoUrl;
+        if(bg.dataset.src !== wantSrc){
+          bg.src = wantSrc;
+          bg.dataset.src = wantSrc;
+          bg.currentTime = 0;
+          bg.play().catch(()=>{});
+        }
+      }
+    } else {
+      $('#captionStrip').textContent = '';
+    }
+  });
+
+  $('#btnPlay').addEventListener('click', ()=>{
+    if(av.paused){ av.play(); bg.play().catch(()=>{}); $('#btnPlay').textContent='⏸'; }
+    else { av.pause(); bg.pause(); $('#btnPlay').textContent='▶'; }
+  });
+  $('#btnRW').addEventListener('click', ()=>{ av.currentTime = Math.max(0, av.currentTime-5); });
+  $('#btnFF').addEventListener('click', ()=>{ av.currentTime = Math.min(state.avatarDuration, av.currentTime+5); });
+}
+
+$('#btnRunQueue').addEventListener('click', ()=>{
+  if(state.scenes.length===0){ toast('Process a script first (Script tab → Next).', 'err'); return; }
+  const av = $('#avatarVideo');
+  av.currentTime = 0;
+  av.play();
+  $('#bgVideo').play().catch(()=>{});
+  $('#btnPlay').textContent='⏸';
+  log('Auto‑sync playback started.');
+});
+
+/* =========================================================
+   EXPORT — real in-browser render via ffmpeg.wasm
+   ========================================================= */
+let ffmpegModPromise = null;
+async function loadFfmpeg(){
+  if(state.ffmpegLoaded) return state.ffmpeg;
+  if(!ffmpegModPromise){
+    ffmpegModPromise = (async ()=>{
+      const { FFmpeg } = await import('https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/esm/index.js');
+      const { toBlobURL, fetchFile } = await import('https://unpkg.com/@ffmpeg/util@0.12.1/dist/esm/index.js');
+      const ffmpeg = new FFmpeg();
+      const base = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/esm';
+      ffmpeg.on('log', ({message})=> log(message, 'ok'));
+      ffmpeg.on('progress', ({progress})=>{
+        const pct = Math.min(100, Math.round(progress*100));
+        $('#exportProgress').style.width = pct+'%';
+      });
+      // IMPORTANT FIX: the worker script itself must also be blobbed, otherwise
+      // browsers block "new Worker(cross-origin-url)" with a CORS error
+      // ("cannot be accessed from origin ..."), which is what was breaking export.
+      await ffmpeg.load({
+        coreURL: await toBlobURL(`${base}/ffmpeg-core.js`, 'text/javascript'),
+        wasmURL: await toBlobURL(`${base}/ffmpeg-core.wasm`, 'application/wasm'),
+        classWorkerURL: await toBlobURL('https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/esm/worker.js', 'text/javascript'),
+      });
+      window.__fetchFile = fetchFile;
+      state.ffmpeg = ffmpeg;
+      state.ffmpegLoaded = true;
+      return ffmpeg;
+    })();
+  }
+  return ffmpegModPromise;
+}
+
+function openExportModal(title, body){
+  $('#exportModalTitle').textContent = title;
+  $('#exportModalBody').textContent = body;
+  $('#exportProgress').style.width = '0%';
+  $('#exportModalBackdrop').classList.add('show');
+}
+$('#exportModalClose').addEventListener('click', ()=> $('#exportModalBackdrop').classList.remove('show'));
+$('#btnExport').addEventListener('click', doExport);
+
+function getExportDims(aspect){
+  if(aspect==='16/9') return [1920,1080];
+  if(aspect==='1/1') return [1080,1080];
+  return [1080,1920];
+}
+
+function escapeDrawtext(text){
+  return text.replace(/\\/g,'\\\\').replace(/:/g,'\\:').replace(/'/g,"\u2019").replace(/%/g,'\\%').slice(0,70);
+}
+
+async function doExport(){
+  if(!state.avatarFile){ toast('Add an avatar video first.', 'err'); return; }
+  if(state.scenes.length===0){ toast('Process a script first.', 'err'); return; }
+  const linked = state.scenes.filter(s=>s.selected);
+  if(linked.length===0){ toast('Assign at least one B‑roll clip before exporting.', 'err'); return; }
+
+  openExportModal('Loading render engine…', 'Downloading the WebAssembly video engine (first time only).');
+  log('Export started.');
+  let ffmpeg;
+  try{
+    ffmpeg = await loadFfmpeg();
+  }catch(err){
+    log('Failed to load render engine: '+err.message, 'err');
+    openExportModal('Render engine failed to load', 'Check your internet connection and try again: '+err.message);
+    return;
+  }
+  const fetchFile = window.__fetchFile;
+  const [W,H] = getExportDims(state.aspect);
+  const template = state.template;
+  const bgW = W;
+  const bgH = template==='tpl-split' ? Math.floor(H/2) : H;
+
+  try{
+    openExportModal('Preparing assets…', 'Writing avatar video into the render engine.');
+    await ffmpeg.writeFile('avatar.mp4', await fetchFile(state.avatarFile));
+
+    const filterParts = [];
+    const inputs = ['-i','avatar.mp4'];
+    let inputIdx = 1;
+    const bgLabels = [];
+
+    for(let i=0;i<state.scenes.length;i++){
+      const scene = state.scenes[i];
+      const durSec = Math.max(0.3, scene.duration);
+      if(!scene.selected){
+        filterParts.push(`[0:v]trim=start=${scene.start}:end=${scene.start+durSec},setpts=PTS-STARTPTS,scale=${bgW}:${bgH}:force_original_aspect_ratio=increase,crop=${bgW}:${bgH}[bg${i}]`);
+        bgLabels.push(`[bg${i}]`);
+        continue;
+      }
+      openExportModal('Fetching B‑roll…', `Downloading clip for scene ${i+1} of ${state.scenes.length}.`);
+      const fname = `broll${i}.mp4`;
+      try{
+        const buf = await fetchFile(scene.selected.videoUrl);
+        await ffmpeg.writeFile(fname, buf);
+      }catch(err){
+        log(`Could not download B‑roll for scene ${i+1} (CORS or network) — falling back to avatar frame.`, 'warn');
+        filterParts.push(`[0:v]trim=start=${scene.start}:end=${scene.start+durSec},setpts=PTS-STARTPTS,scale=${bgW}:${bgH}:force_original_aspect_ratio=increase,crop=${bgW}:${bgH}[bg${i}]`);
+        bgLabels.push(`[bg${i}]`);
+        continue;
+      }
+      const clipDur = scene.selected.duration || durSec;
+      const loopCount = clipDur>0 ? Math.max(0, Math.ceil(durSec/clipDur)-1) : 0;
+      if(loopCount>0) inputs.push('-stream_loop', String(loopCount), '-i', fname);
+      else inputs.push('-i', fname);
+      // trim EXACTLY to this scene's spoken duration — never the clip's own full length
+      filterParts.push(`[${inputIdx}:v]trim=duration=${durSec},setpts=PTS-STARTPTS,scale=${bgW}:${bgH}:force_original_aspect_ratio=increase,crop=${bgW}:${bgH},fps=25[bg${i}]`);
+      bgLabels.push(`[bg${i}]`);
+      inputIdx++;
+    }
+
+    const concatFilter = `${bgLabels.join('')}concat=n=${bgLabels.length}:v=1:a=0[bgall]`;
+    let templateFilters = [];
+    let finalLabel = '[bgall]';
+
+    if(template==='tpl-pill'){
+      const avW = Math.round(W*0.34), avH = avW;
+      const ox = W-avW-40, oy = H-avH-40;
+      templateFilters.push(`[0:v]scale=${avW}:${avH}:force_original_aspect_ratio=increase,crop=${avW}:${avH},fps=25[avpip]`);
+      templateFilters.push(`[bgall][avpip]overlay=${ox}:${oy}:shortest=1[vout]`);
+      finalLabel = '[vout]';
+    } else if(template==='tpl-lowerthird'){
+      const avH = Math.round(H*0.28);
+      templateFilters.push(`[0:v]scale=${W}:${avH}:force_original_aspect_ratio=increase,crop=${W}:${avH},fps=25[avpip]`);
+      templateFilters.push(`[bgall][avpip]overlay=0:${H-avH}:shortest=1[vout]`);
+      finalLabel = '[vout]';
+    } else if(template==='tpl-split'){
+      const avH = H - bgH;
+      templateFilters.push(`[0:v]scale=${W}:${avH}:force_original_aspect_ratio=increase,crop=${W}:${avH},fps=25[avpip]`);
+      templateFilters.push(`[bgall][avpip]vstack=inputs=2[vout]`);
+      finalLabel = '[vout]';
+    } else {
+      // tpl-full: no avatar video overlay, audio only
+      finalLabel = '[bgall]';
+    }
+
+    let captionFilters = [];
+    let captionsOk = false;
+    if($('#captionsToggle').checked){
+      try{
+        openExportModal('Preparing captions…', 'Downloading a free caption font.');
+        await ffmpeg.writeFile('cap.ttf', await fetchFile(FONT_URL));
+        captionsOk = true;
+      }catch(err){
+        log('Caption font failed to load — exporting without burned captions: '+err.message, 'warn');
+      }
+    }
+
+    let currentLabel = finalLabel;
+    if(captionsOk){
+      state.scenes.forEach((scene,i)=>{
+        const nextLabel = `[cap${i}]`;
+        const txt = escapeDrawtext(scene.text);
+        const y = template==='tpl-lowerthird' ? Math.round(H*0.66) : 'h-160';
+        captionFilters.push(`${currentLabel}drawtext=fontfile=cap.ttf:text='${txt}':fontsize=${Math.round(W*0.045)}:fontcolor=white:borderw=3:bordercolor=black:x=(w-text_w)/2:y=${y}:enable='between(t,${scene.start},${scene.start+scene.duration})'${nextLabel}`);
+        currentLabel = nextLabel;
+      });
+    }
+
+    const fullFilter = [...filterParts, concatFilter, ...templateFilters, ...captionFilters].join(';');
+
+    openExportModal('Compositing video…', 'Merging avatar and B‑roll scenes with your voice track. This can take a few minutes.');
+    const args = [
+      ...inputs,
+      '-filter_complex', fullFilter,
+      '-map', currentLabel,
+      '-map', '0:a?',
+      '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '23',
+      '-c:a', 'aac',
+      '-shortest',
+      'output.mp4'
+    ];
+    log('Running render: ' + args.join(' '));
+    await ffmpeg.exec(args);
+
+    const data = await ffmpeg.readFile('output.mp4');
+    const blob = new Blob([data.buffer], {type:'video/mp4'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'novaroll-export.mp4';
+    document.body.appendChild(a); a.click(); a.remove();
+
+    openExportModal('Export complete ✓', 'Your video has been rendered and downloaded as novaroll-export.mp4.');
+    $('#exportProgress').style.width = '100%';
+    log('Export finished — file downloaded.', 'ok');
+    toast('Export complete — check your downloads.');
+  }catch(err){
+    log('Export failed: '+err.message, 'err');
+    openExportModal('Export failed', err.message + ' — this is often caused by a B‑roll host blocking cross‑origin video downloads, or an invalid/expired Pexels key. Try different clips, re‑check your key, or a shorter script.');
+  }
+}
+
+log('NOVAROLL studio ready.');
+</script>
+</body>
+</html>
